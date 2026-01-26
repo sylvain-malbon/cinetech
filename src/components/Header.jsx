@@ -14,11 +14,11 @@ export default function Header() {
         <span className="text-xl font-bold tracking-wide">Cinetech</span>
       </div>
       <nav className="flex gap-4 text-sm md:text-base mb-2 md:mb-0">
-        <a href="/" className="hover:text-yellow-400 transition">Accueil</a>
+        <a href="/home" className="hover:text-yellow-400 transition">Accueil</a>
         <a href="/movies" className="hover:text-yellow-400 transition">Films</a>
         <a href="/series" className="hover:text-yellow-400 transition">Séries</a>
         <a href="/favorites" className="hover:text-yellow-400 transition">Favoris</a>
-        <a href="/mycomments" className="hover:text-yellow-400 transition">Messages</a>
+        <a href="/messages" className="hover:text-yellow-400 transition">Messages</a>
       </nav>
       <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
         <SearchBar />
