@@ -15,7 +15,7 @@ export default function Series() {
             {error && <div className="text-red-500">Erreur lors du chargement</div>}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {data && data.results && data.results.map(serie => (
-                    <Card key={serie.id} item={serie} slug={slugify(serie.name || "")} />
+                    <Card key={serie.id} item={{ ...serie, media_type: "tv" }} slug={slugify(serie.name || "")} />
                 ))}
             </div>
         </div>

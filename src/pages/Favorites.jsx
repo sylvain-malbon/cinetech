@@ -19,12 +19,18 @@ export default function Favorites() {
                 <div className="text-gray-400">Aucun favori pour le moment.</div>
             ) : (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {favorites.map(item => (
-                        <Card key={item.id + (item.media_type || "")}
-                            item={item}
-                            slug={slugify(item.title || item.name || "")}
-                        />
-                    ))}
+                    {favorites.map(item => {
+                        let media_type = item.media_type;
+                        if (!media_type) {
+                            media_type = item.title ? "movie" : "tv";
+                        }
+                        return (
+                            <Card key={item.id + media_type}
+                                item={{ ...item, media_type }}
+                                slug={slugify(item.title || item.name || "")}
+                            />
+                        );
+                    })}
                 </div>
             )}
         </div>

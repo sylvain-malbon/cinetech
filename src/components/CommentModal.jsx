@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function CommentModal({ open, onClose, onSave, onDelete, initialValue = "" }) {
     const [comment, setComment] = useState(initialValue);

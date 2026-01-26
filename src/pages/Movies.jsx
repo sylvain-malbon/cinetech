@@ -17,7 +17,7 @@ export default function Movies() {
             {error && <div className="text-red-500">Erreur lors du chargement</div>}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {data && data.results && data.results.map(film => (
-                    <Card key={film.id} item={film} slug={slugify(film.title || film.name || "")} />
+                    <Card key={film.id} item={{ ...film, media_type: "movie" }} slug={slugify(film.title || film.name || "")} />
                 ))}
             </div>
         </div>
