@@ -6,10 +6,11 @@ export default function useFetch(url, options = {}, trigger = null) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
+
     useEffect(() => {
         if (!url) return;
 
-        const fetch = async () => {
+        const fetchData = async () => {
             setLoading(true);
             setError(null);
             fetch(url, options)
@@ -18,8 +19,8 @@ export default function useFetch(url, options = {}, trigger = null) {
                 .catch(setError)
                 .finally(() => setLoading(false));
         };
-        
-        fetch();
+
+        fetchData();
         // eslint-disable-next-line
     }, [url, trigger]);
 

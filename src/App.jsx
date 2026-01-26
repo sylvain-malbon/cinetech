@@ -1,16 +1,20 @@
+
 import Header from './components/Header.jsx';
-import { useEffect } from 'react';
+import Movies from './pages/Movies.jsx';
+import Home from './pages/Home.jsx';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 function App() {
-  useEffect(() => { console.log(import.meta.env.VITE_TMDB_API_KEY) }, [])
   return (
-    <>
+    <Router>
       <Header />
-      {/* Ici tu ajouteras le routing et le rendu des pages */}
       <main className="p-4">
-        <h1 className="text-2xl font-bold text-center mt-8">Bienvenue sur Cinetech</h1>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/movies" element={<Movies />} />
+        </Routes>
       </main>
-    </>
+    </Router>
   );
 }
 
