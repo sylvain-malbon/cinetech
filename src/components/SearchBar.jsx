@@ -26,10 +26,10 @@ export default function SearchBar() {
     const handleSelect = (item) => {
         if (item.media_type === "movie") {
             const slug = slugify(item.title || "");
-            navigate(`/movie/${item.id}-${slug}`);
+            navigate(`/movies/${item.id}-${slug}`);
         } else if (item.media_type === "tv") {
             const slug = slugify(item.name || "");
-            navigate(`/serie/${item.id}-${slug}`);
+            navigate(`/series/${item.id}-${slug}`);
         }
         setQuery("");
         setSelectedIndex(-1);

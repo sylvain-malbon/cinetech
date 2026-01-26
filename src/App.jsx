@@ -2,10 +2,10 @@
 
 import Header from './components/Header.jsx';
 import Movies from './pages/Movies.jsx';
+import Series from './pages/Series.jsx';
 import Home from './pages/Home.jsx';
 import Results from './pages/Results.jsx';
-import MovieDetails from './pages/MovieDetails.jsx';
-import SerieDetails from './pages/SerieDetails.jsx';
+import Details from './pages/Details.jsx';
 import Favorites from './pages/Favorites.jsx';
 import Messages from './pages/Messages.jsx';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
@@ -20,8 +20,9 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/movies" element={<Movies />} />
           <Route path="/results" element={<Results />} />
-          <Route path="/movie/:idSlug" element={<MovieDetails />} />
-          <Route path="/serie/:idSlug" element={<SerieDetails />} />
+          <Route path="/movies/:idSlug" element={<Details />} />
+          <Route path="/series" element={<Series />} />
+          <Route path="/series/:idSlug" element={<Details />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/messages" element={<Messages />} />
         </Routes>
