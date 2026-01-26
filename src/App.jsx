@@ -1,6 +1,8 @@
 import Header from './components/Header.jsx';
+import { useEffect } from 'react';
 
 function App() {
+  useEffect(() => { console.log(import.meta.env.VITE_TMDB_API_KEY) }, [])
   return (
     <>
       <Header />
