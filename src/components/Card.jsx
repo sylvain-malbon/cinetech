@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import CommentModal from "./CommentModal.jsx";
 import { useNavigate } from "react-router-dom";
 import slugify from "../utils/slug.js";
-import { addFavorite, removeFavorite, isFavorite as isFavoriteLS, saveComment, getComment } from "../utils/localStorage.js";
+import { addFavorite, removeFavorite, isFavorite as isFavoriteLS, saveComment, getComment, deleteComment } from "../utils/localStorage.js";
 
 export default function Card({ item, slug }) {
     const navigate = useNavigate();
@@ -136,7 +136,7 @@ export default function Card({ item, slug }) {
                 onDelete={isCommented ? () => {
                     setComment("");
                     setIsCommented(false);
-                    saveComment(item, "");
+                    deleteComment(item);
                 } : undefined}
                 initialValue={comment}
             />

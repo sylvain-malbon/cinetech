@@ -1,3 +1,9 @@
+// Supprime complètement un commentaire pour un item
+export function deleteComment(item) {
+    let coms = getComments();
+    coms = coms.filter(c => !(c.id === item.id && c.media_type === (item.media_type || (item.title ? 'movie' : 'tv'))));
+    localStorage.setItem(COMMENTS_KEY, JSON.stringify(coms));
+}
 // Clé utilisée pour stocker les commentaires
 const COMMENTS_KEY = 'cinetech_comments';
 
