@@ -24,85 +24,99 @@ function useLocalStorage(key, initialValue) {
     return [storedValue, setValue];
 }
 
+
 export default function Details() {
     const { idSlug } = useParams();
     const location = useLocation();
     const isMovie = location.pathname.startsWith("/movies/");
     const isSerie = location.pathname.startsWith("/series/");
-    const id = idSlug.split("-")[0];
-    const url = isMovie
+    const id = idSlug ? idSlug.split("-")[0] : null;
+    const url = id ? (isMovie
         ? `https://api.themoviedb.org/3/movie/${id}?api_key=${API_KEY}&language=fr-FR`
-        : `https://api.themoviedb.org/3/tv/${id}?api_key=${API_KEY}&language=fr-FR`;
+        : `https://api.themoviedb.org/3/tv/${id}?api_key=${API_KEY}&language=fr-FR`) : null;
     const { data, loading, error } = useFetch(url);
 
-    // Fetch cast (acteurs)
+    // Cast
     const [cast, setCast] = useState([]);
     useEffect(() => {
+        if (!id) return setCast([]);
         fetch(`https://api.themoviedb.org/3/${isMovie ? "movie" : "tv"}/${id}/credits?api_key=${API_KEY}&language=fr-FR`)
             .then(res => res.json())
-            .then(json => setCast(json.cast ? json.cast.slice(0, 5) : []));
+            .then(json => setCast(Array.isArray(json.cast) ? json.cast.slice(0, 5) : []))
+            .catch(() => setCast([]));
     }, [id, isMovie]);
 
-    // Fetch similar
+    // Suggestions similaires
     const [similar, setSimilar] = useState([]);
     useEffect(() => {
+        if (!id) return setSimilar([]);
         fetch(`https://api.themoviedb.org/3/${isMovie ? "movie" : "tv"}/${id}/similar?api_key=${API_KEY}&language=fr-FR`)
             .then(res => res.json())
-            .then(json => setSimilar(json.results ? json.results.slice(0, 6) : []));
+            .then(json => setSimilar(Array.isArray(json.results) ? json.results.slice(0, 6) : []))
+            .catch(() => setSimilar([]));
     }, [id, isMovie]);
 
     // Favoris (localStorage)
     const [favoris, setFavoris] = useLocalStorage("cinetech_favoris", []);
-    const isFav = favoris.some(f => f.id === data?.id && f.type === (isMovie ? "movie" : "tv"));
+    const isFav = data && favoris.some(f => f.id === data.id && f.media_type === (isMovie ? "movie" : "tv"));
     const toggleFavori = () => {
         if (!data) return;
         if (isFav) {
-            setFavoris(favoris.filter(f => !(f.id === data.id && f.type === (isMovie ? "movie" : "tv"))));
+            setFavoris(favoris.filter(f => !(f.id === data.id && f.media_type === (isMovie ? "movie" : "tv"))));
         } else {
-            setFavoris([...favoris, { id: data.id, type: isMovie ? "movie" : "tv", title: isMovie ? data.title : data.name, poster: data.poster_path }]);
+            // On stocke tout l'objet TMDB + media_type
+            const toSave = { ...data, media_type: isMovie ? "movie" : "tv" };
+            setFavoris([...favoris, toSave]);
         }
     };
 
     // Commentaires (API + localStorage)
     const [commentsApi, setCommentsApi] = useState([]);
     useEffect(() => {
+        if (!id) return setCommentsApi([]);
         fetch(`https://api.themoviedb.org/3/${isMovie ? "movie" : "tv"}/${id}/reviews?api_key=${API_KEY}&language=fr-FR`)
             .then(res => res.json())
-            .then(json => setCommentsApi(json.results || []));
+            .then(json => setCommentsApi(Array.isArray(json.results) ? json.results : []))
+            .catch(() => setCommentsApi([]));
     }, [id, isMovie]);
     const [comments, setComments] = useLocalStorage(`cinetech_comments_${isMovie ? "movie" : "tv"}_${id}`, []);
     const [modalOpen, setModalOpen] = useState(false);
     const [editIndex, setEditIndex] = useState(null);
 
-    if (loading) return <div className="p-4">Chargement...</div>;
-    if (error) return <div className="p-4 text-red-500">Erreur lors du chargement</div>;
-    if (!data) return null;
-
-    // Récupération réalisateur/créateur
-    // Pour films, on refait un fetch pour crew (API ne renvoie pas crew dans /movie/{id})
-    const [realisateur, setRealisateur] = useState("");
+    // Réalisateur/créateur
+    const [realisateur, setRealisateur] = useState("-");
     useEffect(() => {
+        if (!id) return setRealisateur("-");
         if (isMovie) {
-            // Pour les films, fetch du crew pour trouver le réalisateur
             fetch(`https://api.themoviedb.org/3/movie/${id}/credits?api_key=${API_KEY}&language=fr-FR`)
                 .then(res => res.json())
                 .then(json => {
-                    const dir = json.crew.find(p => p.job === "Director");
+                    const dir = Array.isArray(json.crew) ? json.crew.find(p => p.job === "Director") : null;
                     setRealisateur(dir ? dir.name : "-");
                 })
                 .catch(() => setRealisateur("-"));
-        } else if (isSerie && data && data.created_by) {
-            // Pour les séries, on prend le champ created_by
+        } else if (isSerie && data && Array.isArray(data.created_by)) {
             setRealisateur(data.created_by.map(c => c.name).join(", ") || "-");
         } else {
             setRealisateur("-");
         }
     }, [id, isMovie, isSerie, data]);
 
+    // Sécurité du rendu
+    if (loading) return <div className="p-4">Chargement...</div>;
+    if (error) return <div className="p-4 text-red-500">Erreur lors du chargement</div>;
+    if (!data || typeof data !== 'object') {
+        return (
+            <div className="p-4 max-w-3xl mx-auto bg-gray-900 rounded-lg shadow-lg text-white">
+                <div className="text-center text-gray-400">Aucune donnée trouvée pour ce média.</div>
+            </div>
+        );
+    }
+
     return (
         <div className="p-4 max-w-3xl mx-auto bg-gray-900 rounded-lg shadow-lg text-white">
             <div className="flex flex-col md:flex-row gap-6">
-                {data.poster_path ? (
+                {data && data.poster_path ? (
                     <img src={`https://image.tmdb.org/t/p/w300${data.poster_path}`} alt={isMovie ? data.title : data.name} className="mb-4 rounded w-50 h-75 object-cover self-center md:self-start" />
                 ) : (
                     <div className="mb-4 flex items-center justify-center w-50 h-75 bg-gray-700 rounded">
@@ -113,22 +127,39 @@ export default function Details() {
                     </div>
                 )}
                 <div className="flex-1">
-                    <h2 className="text-2xl font-bold mb-2">{isMovie ? data.title : data.name}</h2>
+                    <h2 className="text-2xl font-bold mb-2">{isMovie ? data.title || '-' : data.name || '-'}</h2>
                     <div className="mb-2 flex flex-wrap gap-2 items-center">
                         <span className="bg-yellow-400 text-gray-900 px-2 py-1 rounded text-xs font-semibold">{isMovie ? "Film" : "Série"}</span>
-                        {data.genres && data.genres.map(g => (
-                            <span key={g.id} className="bg-gray-700 px-2 py-1 rounded text-xs">{g.name}</span>
-                        ))}
+                        {data.genres && data.genres.length > 0 ? (
+                            data.genres.map(g => (
+                                <span key={g.id} className="bg-gray-700 px-2 py-1 rounded text-xs">{g.name}</span>
+                            ))
+                        ) : (
+                            <span className="text-xs text-gray-500">-</span>
+                        )}
                     </div>
-                    <div className="mb-2"><strong>Réalisateur{isSerie && "(s)"} :</strong> {realisateur}</div>
-                    <div className="mb-2"><strong>Pays d'origine :</strong> {data.production_countries ? data.production_countries.map(c => c.name).join(", ") : "-"}</div>
-                    <div className="mb-2"><strong>{isMovie ? "Date de sortie" : "Date de première diffusion"} :</strong> {isMovie ? data.release_date : data.first_air_date}</div>
-                    <div className="mb-2"><strong>Note :</strong> {data.vote_average} / 10</div>
-                    <div className="mb-2"><strong>Résumé :</strong> {data.overview}</div>
+                    <div className="mb-2"><strong>Réalisateur{isSerie && "(s)"} :</strong> {realisateur || '-'}</div>
+                    <div className="mb-2"><strong>Pays d'origine :</strong> {data.production_countries && data.production_countries.length > 0 ? data.production_countries.map(c => c.name).join(", ") : '-'}</div>
+                    <div className="mb-2"><strong>{isMovie ? "Date de sortie" : "Date de première diffusion"} :</strong> {isMovie ? (data.release_date || '-') : (data.first_air_date || '-')}</div>
+                    <div className="mb-2"><strong>Note :</strong> {typeof data.vote_average === 'number' ? data.vote_average : '-'} / 10</div>
+                    <div className="mb-2"><strong>Résumé :</strong> {data.overview || '-'}</div>
                     <div className="mb-2 flex flex-wrap gap-2 items-center">
-                        <button onClick={toggleFavori} className={`px-3 py-1 rounded font-semibold ${isFav ? "bg-yellow-400 text-gray-900" : "bg-gray-700 text-white hover:bg-gray-600"}`}>
-                            {isFav ? "★ Retirer des favoris" : "☆ Ajouter aux favoris"}
+                        <button
+                            aria-label={isFav ? "Retirer des favoris" : "Ajouter aux favoris"}
+                            onClick={toggleFavori}
+                            className="focus:outline-none"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill={isFav ? "#facc15" : "#9ca3af"}
+                                stroke={isFav ? "#facc15" : "#9ca3af"}
+                                className="w-7 h-7 transition"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.48 3.499a1.7 1.7 0 0 1 3.04 0l2.09 4.23a1.7 1.7 0 0 0 1.28.93l4.67.68a1.7 1.7 0 0 1 .94 2.9l-3.38 3.29a1.7 1.7 0 0 0-.49 1.5l.8 4.65a1.7 1.7 0 0 1-2.47 1.79l-4.18-2.2a1.7 1.7 0 0 0-1.58 0l-4.18 2.2a1.7 1.7 0 0 1-2.47-1.79l.8-4.65a1.7 1.7 0 0 0-.49-1.5l-3.38-3.29a1.7 1.7 0 0 1 .94-2.9l4.67-.68a1.7 1.7 0 0 0 1.28-.93l2.09-4.23z" />
+                            </svg>
                         </button>
+                        <span className="text-xs text-gray-400">{isFav ? "Retirer des favoris" : "Ajouter aux favoris"}</span>
                     </div>
                 </div>
             </div>
@@ -156,7 +187,19 @@ export default function Details() {
             </div>
             <div className="mt-8">
                 <h3 className="text-lg font-bold mb-2">Commentaires</h3>
-                <button onClick={() => { setEditIndex(null); setModalOpen(true); }} className="mb-2 px-3 py-1 rounded bg-yellow-400 text-gray-900 font-semibold hover:bg-yellow-300">Ajouter un commentaire</button>
+                <button onClick={() => { setEditIndex(null); setModalOpen(true); }} className="mb-2 px-3 py-1 rounded bg-yellow-400 text-gray-900 font-semibold hover:bg-yellow-300 flex items-center gap-2">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="#1f2937"
+                        stroke="#1f2937"
+                        className="w-5 h-5"
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 11.5a8.38 8.38 0 0 1-1.9 5.4A8.5 8.5 0 0 1 3 12.5c0-4.42 3.58-8 8-8s8 3.58 8 8z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 15h8" />
+                    </svg>
+                    Ajouter un commentaire
+                </button>
                 {/* Commentaires API */}
                 {commentsApi.length > 0 && (
                     <div className="mb-4">

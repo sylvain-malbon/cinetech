@@ -8,8 +8,9 @@ export default function Favorites() {
 
     useEffect(() => {
         setFavorites(getFavorites());
-        // Pour réagir à l'ajout/retrait, on pourrait écouter le storage event ou utiliser un contexte global
-        // Ici, on recharge à chaque affichage de la page
+        const syncFavorites = () => setFavorites(getFavorites());
+        window.addEventListener('storage', syncFavorites);
+        return () => window.removeEventListener('storage', syncFavorites);
     }, []);
 
     return (
