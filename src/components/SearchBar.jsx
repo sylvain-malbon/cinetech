@@ -1,110 +1,35 @@
-import React, { useState } from "react";
+
+import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
-import useFetch from "../hooks/useFetch";
-import slugify from "../utils/slug.js";
-
-const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
-
 export default function SearchBar() {
-    const [query, setQuery] = useState("");
-    const [selectedIndex, setSelectedIndex] = useState(-1);
-    const [showSuggestions, setShowSuggestions] = useState(false);
+    const inputRef = useRef();
     const navigate = useNavigate();
-    // Vérification de la clé API
-    console.log('API_KEY:', API_KEY);
-    const url = query.length >= 2
-        ? `https://api.themoviedb.org/3/search/multi?api_key=${API_KEY}&language=fr-FR&query=${encodeURIComponent(query)}`
-        : null;
-    const { data, loading, error } = useFetch(url);
 
-    if (error) {
-        console.log('Erreur fetch TMDB:', error);
-    }
-
-    // Fonction pour gérer le clic ou la validation clavier sur une suggestion
-    const handleSelect = (item) => {
-        if (item.media_type === "movie") {
-            const slug = slugify(item.title || "");
-            navigate(`/movies/${item.id}-${slug}`);
-        } else if (item.media_type === "tv") {
-            const slug = slugify(item.name || "");
-            navigate(`/series/${item.id}-${slug}`);
-        }
-        setQuery("");
-        setSelectedIndex(-1);
-        setShowSuggestions(false);
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        const value = inputRef.current.value;
+        navigate(`/results?query=${encodeURIComponent(value)}`);
     };
-
-    // Gestion du clavier
-    const handleKeyDown = (e) => {
-        if (!data || !data.results) {
-            if (e.key === "Enter" && query.length >= 2) {
-                setShowSuggestions(false);
-                navigate(`/results?query=${encodeURIComponent(query)}`);
-            }
-            return;
-        }
-        if (e.key === "ArrowDown") {
-            e.preventDefault();
-            setSelectedIndex(prev => (prev < data.results.length - 1 ? prev + 1 : 0));
-        } else if (e.key === "ArrowUp") {
-            e.preventDefault();
-            setSelectedIndex(prev => (prev > 0 ? prev - 1 : data.results.length - 1));
-        } else if (e.key === "Enter") {
-            if (selectedIndex >= 0 && data.results[selectedIndex]) {
-                handleSelect(data.results[selectedIndex]);
-            } else if (query.length >= 2) {
-                setShowSuggestions(false);
-                navigate(`/results?query=${encodeURIComponent(query)}`);
-            }
-        }
-    };
-
-    // Remettre l'index si la liste change ou la recherche est vidée
-
-    React.useEffect(() => {
-        setSelectedIndex(-1);
-        setShowSuggestions(query.length >= 2 && data?.results?.length > 0);
-    }, [query, data?.results?.length]);
-
-    // Fermer la liste si on clique en dehors
-    React.useEffect(() => {
-        const handleClickOutside = (e) => {
-            if (!e.target.closest('.searchbar-autocomplete')) {
-                setShowSuggestions(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
 
     return (
-        <div className="relative w-full md:w-64 searchbar-autocomplete">
+        <form onSubmit={handleSubmit} className="flex items-center w-full max-w-2xl focus-within:ring-2 focus-within:ring-yellow-400 rounded">
             <input
-                type="search"
-                className="w-full px-3 py-2 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                placeholder="Rechercher un film ou une série..."
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-                autoComplete="off"
+                ref={inputRef}
+                type="text"
+                placeholder="Rechercher un film ou une série"
+                className="flex-1 px-4 py-1 border border-gray-300 border-r-0 rounded-l focus:outline-none"
             />
-            {loading && <div className="absolute left-0 right-0 bg-gray-900 text-gray-400 px-3 py-2">Chargement...</div>}
-            {error && <div className="absolute left-0 right-0 bg-red-900 text-red-300 px-3 py-2">Erreur lors de la recherche</div>}
-            {showSuggestions && data && data.results && data.results.length > 0 && (
-                <ul className="absolute left-0 right-0 bg-gray-900 border border-gray-700 rounded mt-1 z-10 max-h-60 overflow-y-auto">
-                    {data.results.map((item, idx) => (
-                        <li
-                            key={item.id}
-                            className={`px-3 py-2 hover:bg-gray-800 cursor-pointer ${selectedIndex === idx ? 'bg-yellow-400 text-gray-900' : ''}`}
-                            onClick={() => handleSelect(item)}
-                        >
-                            {item.title || item.name}
-                        </li>
-                    ))}
-                </ul>
-            )}
-        </div>
+            <button
+                type="submit"
+                className="bg-yellow-400 text-gray-900 font-semibold px-4 py-1 rounded-r hover:bg-yellow-300 transition flex items-center justify-center border border-l-0 border-gray-300 focus:outline-none"
+                aria-label="Lancer la recherche"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" fill="none" />
+                    <line x1="16.5" y1="16.5" x2="21" y2="21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+            </button>
+        </form>
     );
 }
