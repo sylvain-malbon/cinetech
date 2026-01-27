@@ -108,7 +108,7 @@ export default function Card({ item, slug }) {
                                     viewBox="0 0 24 24"
                                     fill={isFavorite ? "#facc15" : "#9ca3af"}
                                     stroke={isFavorite ? "#facc15" : "#9ca3af"}
-                                    className="w-5 h-5 transition"
+                                    className="w-4 h-4 transition"
                                 >
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.48 3.499a1.7 1.7 0 0 1 3.04 0l2.09 4.23a1.7 1.7 0 0 0 1.28.93l4.67.68a1.7 1.7 0 0 1 .94 2.9l-3.38 3.29a1.7 1.7 0 0 0-.49 1.5l.8 4.65a1.7 1.7 0 0 1-2.47 1.79l-4.18-2.2a1.7 1.7 0 0 0-1.58 0l-4.18 2.2a1.7 1.7 0 0 1-2.47-1.79l.8-4.65a1.7 1.7 0 0 0-.49-1.5l-3.38-3.29a1.7 1.7 0 0 1 .94-2.9l4.67-.68a1.7 1.7 0 0 0 1.28-.93l2.09-4.23z" />
                                 </svg>
