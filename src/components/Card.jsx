@@ -74,7 +74,7 @@ export default function Card({ item, slug }) {
 
     return (
         <>
-            <div className="bg-gray-900 rounded-xl shadow-lg p-3 flex flex-col items-stretch hover:shadow-2xl transition group border border-gray-700">
+            <div className="bg-gray-900 rounded-xl shadow-lg p-3 flex flex-col items-stretch hover:shadow-2xl transition group">
                 <div className="w-full flex flex-col items-stretch cursor-pointer" onClick={handleClick}>
                     {item.poster_path ? (
                         <div className="overflow-hidden rounded-lg mb-3 aspect-[2/3] bg-gray-700">
@@ -104,7 +104,6 @@ export default function Card({ item, slug }) {
                                 }
                             >
                                 <svg
-                                    xmlns="http://www.w3.org/2000/svg"
                                     viewBox="0 0 24 24"
                                     fill={isFavorite ? "#facc15" : "#9ca3af"}
                                     stroke={isFavorite ? "#facc15" : "#9ca3af"}

@@ -10,7 +10,7 @@ export default function Series() {
 
     return (
         <div className="p-4">
-            <h2 className="text-xl font-bold mb-4">Séries populaires</h2>
+            <h2 className="text-xl font-bold mb-4 text-white">Séries populaires</h2>
             {loading && <div>Chargement...</div>}
             {error && <div className="text-red-500">Erreur lors du chargement</div>}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

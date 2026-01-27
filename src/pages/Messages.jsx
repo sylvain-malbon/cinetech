@@ -10,7 +10,7 @@ export default function Messages() {
 
     return (
         <div className="p-4">
-            <h2 className="text-xl font-bold mb-4">Mes commentaires</h2>
+            <h2 className="text-xl font-bold mb-4 text-white">Mes commentaires</h2>
             {comments.length === 0 ? (
                 <div className="text-gray-400">Aucun commentaire pour le moment.</div>
             ) : (

@@ -13,20 +13,22 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 function App() {
   return (
     <Router>
-      <Header />
-      <main className="p-4">
-        <Routes>
-          <Route path="/home" element={<Home />} />
-          <Route path="/" element={<Home />} />
-          <Route path="/movies" element={<Movies />} />
-          <Route path="/results" element={<Results />} />
-          <Route path="/movies/:idSlug" element={<Details />} />
-          <Route path="/series" element={<Series />} />
-          <Route path="/series/:idSlug" element={<Details />} />
-          <Route path="/favorites" element={<Favorites />} />
-          <Route path="/messages" element={<Messages />} />
-        </Routes>
-      </main>
+      <div className="bg-gray-800 min-h-screen">
+        <Header />
+        <main className="p-4">
+          <Routes>
+            <Route path="/home" element={<Home />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/movies" element={<Movies />} />
+            <Route path="/results" element={<Results />} />
+            <Route path="/movies/:idSlug" element={<Details />} />
+            <Route path="/series" element={<Series />} />
+            <Route path="/series/:idSlug" element={<Details />} />
+            <Route path="/favorites" element={<Favorites />} />
+            <Route path="/messages" element={<Messages />} />
+          </Routes>
+        </main>
+      </div>
     </Router>
   );
 }
