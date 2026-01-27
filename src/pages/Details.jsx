@@ -119,11 +119,8 @@ export default function Details() {
                 {data && data.poster_path ? (
                     <img src={`https://image.tmdb.org/t/p/w300${data.poster_path}`} alt={isMovie ? data.title : data.name} className="mb-4 rounded w-50 h-75 object-cover self-center md:self-start" />
                 ) : (
-                    <div className="mb-4 flex items-center justify-center w-50 h-75 bg-gray-700 rounded">
-                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                            <line x1="3" y1="3" x2="21" y2="21" />
-                        </svg>
+                    <div className="mb-4 w-50 h-75 aspect-[2/3] bg-gray-700 flex items-center justify-center rounded-lg text-gray-400 text-base self-center md:self-start">
+                        Image indisponible
                     </div>
                 )}
                 <div className="flex-1">
