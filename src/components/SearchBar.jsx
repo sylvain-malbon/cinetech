@@ -16,7 +16,7 @@ export default function SearchBar() {
             <input
                 ref={inputRef}
                 type="text"
-                placeholder="Rechercher un film ou une série"
+                placeholder="Rechercher un film ou une série..."
                 className="flex-1 px-4 py-1 focus:outline-none h-full bg-gray-100 text-gray-900 placeholder-gray-500"
             />
             <button

@@ -3,6 +3,8 @@ import { useParams, useLocation } from "react-router-dom";
 import useFetch from "../hooks/useFetch";
 import { useEffect, useState } from "react";
 import CommentModal from "../components/CommentModal";
+import Comments from "../components/Comments.jsx";
+import { getComments, saveComment, deleteComment } from "../utils/localStorage.js";
 
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
@@ -79,9 +81,17 @@ export default function Details() {
             .then(json => setCommentsApi(Array.isArray(json.results) ? json.results : []))
             .catch(() => setCommentsApi([]));
     }, [id, isMovie]);
-    const [comments, setComments] = useLocalStorage(`cinetech_comments_${isMovie ? "movie" : "tv"}_${id}`, []);
+    // Gestion centralisée des commentaires utilisateur (clé globale)
+    const [comments, setComments] = useState([]);
     const [modalOpen, setModalOpen] = useState(false);
     const [editIndex, setEditIndex] = useState(null);
+
+    // Charger les commentaires pour ce film/série depuis la clé globale
+    useEffect(() => {
+        if (!id) return setComments([]);
+        const all = getComments();
+        setComments(all.filter(c => c.id === Number(id) && c.media_type === (isMovie ? "movie" : "tv")));
+    }, [id, modalOpen]);
 
     // Réalisateur/créateur
     const [realisateur, setRealisateur] = useState("-");
@@ -184,7 +194,10 @@ export default function Details() {
             </div>
             <div className="mt-8">
                 <h3 className="text-lg font-bold mb-2">Commentaires</h3>
-                <button onClick={() => { setEditIndex(null); setModalOpen(true); }} className="mb-2 px-3 py-1 rounded bg-yellow-400 text-gray-900 font-semibold hover:bg-yellow-300 flex items-center gap-2">
+                <button
+                    onClick={() => { setEditIndex(0); setModalOpen(true); }}
+                    className="mb-2 px-3 py-1 rounded bg-yellow-400 text-gray-900 font-semibold hover:bg-yellow-300 flex items-center gap-2"
+                >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
@@ -195,7 +208,7 @@ export default function Details() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 11.5a8.38 8.38 0 0 1-1.9 5.4A8.5 8.5 0 0 1 3 12.5c0-4.42 3.58-8 8-8s8 3.58 8 8z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 15h8" />
                     </svg>
-                    Ajouter un commentaire
+                    {comments.length === 0 ? "Ajouter un commentaire" : "Modifier mon commentaire"}
                 </button>
                 {/* Commentaires API */}
                 {commentsApi.length > 0 && (
@@ -210,37 +223,39 @@ export default function Details() {
                     </div>
                 )}
                 {/* Commentaires LocalStorage */}
-                {comments.length > 0 && (
-                    <div>
-                        <h4 className="font-semibold text-sm mb-1 text-gray-300">Vos commentaires</h4>
-                        {comments.map((c, i) => (
-                            <div key={i} className="mb-2 p-2 bg-gray-800 rounded flex justify-between items-center">
-                                <div>
-                                    <div className="text-xs text-gray-400">Vous <span className="text-gray-500">({c.date})</span></div>
-                                    <div className="text-sm">{c.text}</div>
-                                </div>
-                                <div className="flex gap-2">
-                                    <button onClick={() => { setEditIndex(i); setModalOpen(true); }} className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300 hover:bg-gray-600">Modifier</button>
-                                    <button onClick={() => setComments(comments.filter((_, idx) => idx !== i))} className="text-xs px-2 py-1 rounded bg-red-500 text-white hover:bg-red-400">Supprimer</button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                <Comments
+                    comments={comments}
+                    title="Mes commentaires"
+                    onEdit={(idx) => { setEditIndex(idx); setModalOpen(true); }}
+                    onDelete={(_, com) => {
+                        deleteComment(com);
+                        // Rafraîchir la liste
+                        const all = getComments();
+                        setComments(all.filter(c => c.id === Number(id) && c.media_type === (isMovie ? "movie" : "tv")));
+                    }}
+                />
                 <CommentModal
                     open={modalOpen}
                     onClose={() => setModalOpen(false)}
                     onSave={txt => {
-                        if (editIndex !== null) {
-                            const newComments = [...comments];
-                            newComments[editIndex] = { ...newComments[editIndex], text: txt };
-                            setComments(newComments);
-                        } else {
-                            setComments([...comments, { text: txt, date: new Date().toLocaleDateString() }]);
-                        }
+                        // Ajout ou modification via saveComment (clé globale)
+                        const item = {
+                            id: Number(id),
+                            media_type: isMovie ? "movie" : "tv",
+                            title: isMovie ? data?.title : data?.name
+                        };
+                        saveComment(item, txt);
+                        // Rafraîchir la liste
+                        const all = getComments();
+                        setComments(all.filter(c => c.id === Number(id) && c.media_type === (isMovie ? "movie" : "tv")));
                     }}
-                    onDelete={editIndex !== null ? () => setComments(comments.filter((_, idx) => idx !== editIndex)) : undefined}
-                    initialValue={editIndex !== null ? comments[editIndex].text : ""}
+                    onDelete={editIndex !== null ? () => {
+                        const com = comments[editIndex];
+                        deleteComment(com);
+                        const all = getComments();
+                        setComments(all.filter(c => c.id === Number(id) && c.media_type === (isMovie ? "movie" : "tv")));
+                    } : undefined}
+                    initialValue={editIndex !== null ? (comments[editIndex]?.content || comments[editIndex]?.text || "") : ""}
                 />
             </div>
             <div className="mt-8">
