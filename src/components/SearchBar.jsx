@@ -1,4 +1,3 @@
-
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -13,16 +12,16 @@ export default function SearchBar() {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="flex items-center w-full max-w-2xl focus-within:ring-2 focus-within:ring-yellow-400 rounded">
+        <form onSubmit={handleSubmit} className="flex items-stretch w-full max-w-2xl focus-within:ring-2 focus-within:ring-yellow-400 rounded overflow-hidden h-8">
             <input
                 ref={inputRef}
                 type="text"
                 placeholder="Rechercher un film ou une série"
-                className="flex-1 px-4 py-1 border border-gray-300 border-r-0 rounded-l focus:outline-none"
+                className="flex-1 px-4 py-1 focus:outline-none h-full bg-gray-100 text-gray-900 placeholder-gray-500"
             />
             <button
                 type="submit"
-                className="bg-yellow-400 text-gray-900 font-semibold px-4 py-1 rounded-r hover:bg-yellow-300 transition flex items-center justify-center border border-l-0 border-gray-300 focus:outline-none"
+                className="bg-yellow-400 text-gray-900 font-semibold px-4 hover:bg-yellow-300 transition flex items-center justify-center h-full"
                 aria-label="Lancer la recherche"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
