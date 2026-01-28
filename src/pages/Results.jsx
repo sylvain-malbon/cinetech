@@ -17,7 +17,7 @@ export default function Results() {
 
     return (
         <div className="p-4">
-            <h2 className="text-xl font-bold mb-4">Résultats pour : <span className="text-yellow-400">{query}</span></h2>
+            <h2 className="text-xl font-bold mb-4 text-white">Résultats pour : <span className="text-yellow-400">{query}</span></h2>
             {loading && <div>Chargement...</div>}
             {error && <div className="text-red-500">Erreur lors de la recherche</div>}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

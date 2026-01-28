@@ -7,7 +7,7 @@ import Home from './pages/Home.jsx';
 import Results from './pages/Results.jsx';
 import Details from './pages/Details.jsx';
 import Favorites from './pages/Favorites.jsx';
-import Messages from './pages/Messages.jsx';
+import Comments from './pages/Comments.jsx';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 function App() {
@@ -25,7 +25,7 @@ function App() {
             <Route path="/series" element={<Series />} />
             <Route path="/series/:idSlug" element={<Details />} />
             <Route path="/favorites" element={<Favorites />} />
-            <Route path="/messages" element={<Messages />} />
+            <Route path="/messages" element={<Comments />} />
           </Routes>
         </main>
       </div>
