@@ -1,17 +1,21 @@
+
 import { useLocation } from "react-router-dom";
 import useFetch from "../hooks/useFetch";
-
 import Card from "../components/Card.jsx";
 import slugify from "../utils/slug.js";
+import Pagination from "../components/Pagination.jsx";
+import { useState } from "react";
 
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
+
 
 export default function Results() {
     const location = useLocation();
     const params = new URLSearchParams(location.search);
     const query = params.get("query") || "";
+    const [page, setPage] = useState(1);
     const url = query.length >= 2
-        ? `https://api.themoviedb.org/3/search/multi?api_key=${API_KEY}&language=fr-FR&query=${encodeURIComponent(query)}`
+        ? `https://api.themoviedb.org/3/search/multi?api_key=${API_KEY}&language=fr-FR&query=${encodeURIComponent(query)}&page=${page}`
         : null;
     const { data, loading, error } = useFetch(url);
 
@@ -29,6 +33,13 @@ export default function Results() {
                     !loading && <div className="col-span-4 text-gray-400">Aucun résultat</div>
                 )}
             </div>
+            {data && data.total_pages && (
+                <Pagination
+                    currentPage={page}
+                    totalPages={Math.min(data.total_pages, 500)}
+                    onPageChange={setPage}
+                />
+            )}
         </div>
     );
 }
