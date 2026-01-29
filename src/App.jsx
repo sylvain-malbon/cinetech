@@ -25,7 +25,7 @@ function App() {
             <Route path="/series" element={<Series />} />
             <Route path="/series/:idSlug" element={<Details />} />
             <Route path="/favorites" element={<Favorites />} />
-            <Route path="/messages" element={<Comments />} />
+            <Route path="/comments" element={<Comments />} />
           </Routes>
         </main>
       </div>

@@ -20,7 +20,7 @@ export default function Header() {
           <Link to="/movies" className="hover:text-yellow-400 transition">Films</Link>
           <Link to="/series" className="hover:text-yellow-400 transition">Séries</Link>
           <Link to="/favorites" className="hover:text-yellow-400 transition">Favoris</Link>
-          <Link to="/messages" className="hover:text-yellow-400 transition">Commentaires</Link>
+          <Link to="/comments" className="hover:text-yellow-400 transition">Commentaires</Link>
         </nav>
         {/* SearchBar entre menu et login */}
         <div className="flex-1 flex justify-center">
