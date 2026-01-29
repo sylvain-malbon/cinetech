@@ -4,7 +4,7 @@ import useFetch from "../hooks/useFetch";
 import { useEffect, useState } from "react";
 import CommentModal from "../components/CommentModal";
 import Comments from "../components/Comments.jsx";
-import { getComments, saveComment, deleteComment } from "../utils/localStorage.js";
+import { getComments, saveComment, deleteComment, getFavorites, addFavorite, removeFavorite, isFavorite } from "../utils/localStorage.js";
 
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
@@ -58,17 +58,25 @@ export default function Details() {
             .catch(() => setSimilar([]));
     }, [id, isMovie]);
 
-    // Favoris (localStorage)
-    const [favoris, setFavoris] = useLocalStorage("cinetech_favoris", []);
-    const isFav = data && favoris.some(f => f.id === data.id && f.media_type === (isMovie ? "movie" : "tv"));
+    // Favoris (localStorage cohérent)
+    const [isFav, setIsFav] = useState(false);
+    useEffect(() => {
+        if (!data) return setIsFav(false);
+        setIsFav(isFavorite({ ...data, media_type: isMovie ? "movie" : "tv" }));
+        const syncFavorite = () => setIsFav(isFavorite({ ...data, media_type: isMovie ? "movie" : "tv" }));
+        window.addEventListener('storage', syncFavorite);
+        return () => window.removeEventListener('storage', syncFavorite);
+    }, [data, isMovie]);
+
     const toggleFavori = () => {
         if (!data) return;
-        if (isFav) {
-            setFavoris(favoris.filter(f => !(f.id === data.id && f.media_type === (isMovie ? "movie" : "tv"))));
+        const favItem = { ...data, media_type: isMovie ? "movie" : "tv" };
+        if (isFavorite(favItem)) {
+            removeFavorite(favItem);
+            setIsFav(false);
         } else {
-            // On stocke tout l'objet TMDB + media_type
-            const toSave = { ...data, media_type: isMovie ? "movie" : "tv" };
-            setFavoris([...favoris, toSave]);
+            addFavorite(favItem);
+            setIsFav(true);
         }
     };
 

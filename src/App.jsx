@@ -13,9 +13,9 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 function App() {
   return (
     <Router>
-      <div className="bg-gray-800 min-h-screen">
+      <div className="bg-gray-800 min-h-screen flex flex-col">
         <Header />
-        <main className="p-4">
+        <main className="p-4 flex-1">
           <Routes>
             <Route path="/home" element={<Home />} />
             <Route path="/" element={<Home />} />

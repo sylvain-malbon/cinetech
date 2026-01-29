@@ -12,8 +12,14 @@ export default function Favorites() {
     const FAVORITES_PER_PAGE = 20;
 
     useEffect(() => {
-        setFavorites(getFavorites());
-        const syncFavorites = () => setFavorites(getFavorites());
+        const favs = getFavorites();
+        console.log("[DEBUG] Favoris récupérés:", favs);
+        setFavorites(favs);
+        const syncFavorites = () => {
+            const favs = getFavorites();
+            console.log("[DEBUG] Favoris MAJ (storage):", favs);
+            setFavorites(favs);
+        };
         window.addEventListener('storage', syncFavorites);
         return () => window.removeEventListener('storage', syncFavorites);
     }, []);
