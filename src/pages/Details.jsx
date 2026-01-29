@@ -4,27 +4,9 @@ import useFetch from "../hooks/useFetch";
 import { useEffect, useState } from "react";
 import CommentModal from "../components/CommentModal";
 import Comments from "../components/Comments.jsx";
-import { getComments, saveComment, deleteComment, getFavorites, addFavorite, removeFavorite, isFavorite } from "../utils/localStorage.js";
+import { getComments, saveComment, addFavorite, removeFavorite, isFavorite } from "../utils/localStorage.js";
 
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
-
-function useLocalStorage(key, initialValue) {
-    const [storedValue, setStoredValue] = useState(() => {
-        try {
-            const item = window.localStorage.getItem(key);
-            return item ? JSON.parse(item) : initialValue;
-        } catch (error) {
-            return initialValue;
-        }
-    });
-    const setValue = value => {
-        try {
-            setStoredValue(value);
-            window.localStorage.setItem(key, JSON.stringify(value));
-        } catch (error) { }
-    };
-    return [storedValue, setValue];
-}
 
 
 export default function Details() {
@@ -41,29 +23,31 @@ export default function Details() {
     // Cast
     const [cast, setCast] = useState([]);
     useEffect(() => {
-        if (!id) return setCast([]);
+        if (!id) { Promise.resolve().then(() => setCast([])); return; }
         fetch(`https://api.themoviedb.org/3/${isMovie ? "movie" : "tv"}/${id}/credits?api_key=${API_KEY}&language=fr-FR`)
             .then(res => res.json())
             .then(json => setCast(Array.isArray(json.cast) ? json.cast.slice(0, 5) : []))
-            .catch(() => setCast([]));
+            .catch(() => Promise.resolve().then(() => setCast([])));
     }, [id, isMovie]);
 
     // Suggestions similaires
     const [similar, setSimilar] = useState([]);
     useEffect(() => {
-        if (!id) return setSimilar([]);
+        if (!id) { Promise.resolve().then(() => setSimilar([])); return; }
         fetch(`https://api.themoviedb.org/3/${isMovie ? "movie" : "tv"}/${id}/similar?api_key=${API_KEY}&language=fr-FR`)
             .then(res => res.json())
             .then(json => setSimilar(Array.isArray(json.results) ? json.results.slice(0, 6) : []))
-            .catch(() => setSimilar([]));
+            .catch(() => Promise.resolve().then(() => setSimilar([])));
     }, [id, isMovie]);
 
     // Favoris (localStorage cohérent)
     const [isFav, setIsFav] = useState(false);
     useEffect(() => {
-        if (!data) return setIsFav(false);
-        setIsFav(isFavorite({ ...data, media_type: isMovie ? "movie" : "tv" }));
-        const syncFavorite = () => setIsFav(isFavorite({ ...data, media_type: isMovie ? "movie" : "tv" }));
+        if (!data) { Promise.resolve().then(() => setIsFav(false)); }
+        else {
+            Promise.resolve().then(() => setIsFav(isFavorite({ ...data, media_type: isMovie ? "movie" : "tv" })));
+        }
+        const syncFavorite = () => Promise.resolve().then(() => setIsFav(isFavorite({ ...data, media_type: isMovie ? "movie" : "tv" })));
         window.addEventListener('storage', syncFavorite);
         return () => window.removeEventListener('storage', syncFavorite);
     }, [data, isMovie]);
@@ -83,28 +67,31 @@ export default function Details() {
     // Commentaires (API + localStorage)
     const [commentsApi, setCommentsApi] = useState([]);
     useEffect(() => {
-        if (!id) return setCommentsApi([]);
+        if (!id) { Promise.resolve().then(() => setCommentsApi([])); return; }
         fetch(`https://api.themoviedb.org/3/${isMovie ? "movie" : "tv"}/${id}/reviews?api_key=${API_KEY}&language=fr-FR`)
             .then(res => res.json())
             .then(json => setCommentsApi(Array.isArray(json.results) ? json.results : []))
-            .catch(() => setCommentsApi([]));
+            .catch(() => Promise.resolve().then(() => setCommentsApi([])));
     }, [id, isMovie]);
     // Gestion centralisée des commentaires utilisateur (clé globale)
     const [comments, setComments] = useState([]);
     const [modalOpen, setModalOpen] = useState(false);
     const [editIndex, setEditIndex] = useState(null);
+    const [modalInitialAuthor, setModalInitialAuthor] = useState('user1');
+    const [replyPath, setReplyPath] = useState(null);
+    const [modalInitialValue, setModalInitialValue] = useState("");
 
     // Charger les commentaires pour ce film/série depuis la clé globale
     useEffect(() => {
-        if (!id) return setComments([]);
+        if (!id) { Promise.resolve().then(() => setComments([])); return; }
         const all = getComments();
-        setComments(all.filter(c => c.id === Number(id) && c.media_type === (isMovie ? "movie" : "tv")));
-    }, [id, modalOpen]);
+        Promise.resolve().then(() => setComments(all.filter(c => c.id === Number(id) && c.media_type === (isMovie ? "movie" : "tv"))));
+    }, [id, modalOpen, isMovie]);
 
     // Réalisateur/créateur
     const [realisateur, setRealisateur] = useState("-");
     useEffect(() => {
-        if (!id) return setRealisateur("-");
+        if (!id) { Promise.resolve().then(() => setRealisateur("-")); return; }
         if (isMovie) {
             fetch(`https://api.themoviedb.org/3/movie/${id}/credits?api_key=${API_KEY}&language=fr-FR`)
                 .then(res => res.json())
@@ -112,11 +99,11 @@ export default function Details() {
                     const dir = Array.isArray(json.crew) ? json.crew.find(p => p.job === "Director") : null;
                     setRealisateur(dir ? dir.name : "-");
                 })
-                .catch(() => setRealisateur("-"));
+                .catch(() => Promise.resolve().then(() => setRealisateur("-")));
         } else if (isSerie && data && Array.isArray(data.created_by)) {
-            setRealisateur(data.created_by.map(c => c.name).join(", ") || "-");
+            Promise.resolve().then(() => setRealisateur(data.created_by.map(c => c.name).join(", ") || "-"));
         } else {
-            setRealisateur("-");
+            Promise.resolve().then(() => setRealisateur("-"));
         }
     }, [id, isMovie, isSerie, data]);
 
@@ -137,7 +124,7 @@ export default function Details() {
                 {data && data.poster_path ? (
                     <img src={`https://image.tmdb.org/t/p/w300${data.poster_path}`} alt={isMovie ? data.title : data.name} className="mb-4 rounded w-50 h-75 object-cover self-center md:self-start" />
                 ) : (
-                    <div className="mb-4 w-50 h-75 aspect-[2/3] bg-gray-700 flex items-center justify-center rounded-lg text-gray-400 text-base self-center md:self-start">
+                    <div className="mb-4 w-50 h-75 bg-gray-700 flex items-center justify-center rounded-lg text-gray-400 text-base self-center md:self-start" style={{ aspectRatio: '2/3' }}>
                         Image indisponible
                     </div>
                 )}
@@ -202,22 +189,29 @@ export default function Details() {
             </div>
             <div className="mt-8">
                 <h3 className="text-lg font-bold mb-2">Commentaires</h3>
-                <button
-                    onClick={() => { setEditIndex(0); setModalOpen(true); }}
-                    className="mb-2 px-3 py-1 rounded bg-yellow-400 text-gray-900 font-semibold hover:bg-yellow-300 flex items-center gap-2"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="#1f2937"
-                        stroke="#1f2937"
-                        className="w-5 h-5"
-                    >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 11.5a8.38 8.38 0 0 1-1.9 5.4A8.5 8.5 0 0 1 3 12.5c0-4.42 3.58-8 8-8s8 3.58 8 8z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 15h8" />
-                    </svg>
-                    {comments.length === 0 ? "Ajouter un commentaire" : "Modifier mon commentaire"}
-                </button>
+                {(() => {
+                    const topComment = comments && comments[0];
+                    const topDeleted = topComment && (topComment.content === 'Commentaire supprimé' || topComment.text === 'Commentaire supprimé');
+                    return (
+                        <button
+                            onClick={() => { if (!topDeleted) { setEditIndex(0); setModalOpen(true); } }}
+                            disabled={topDeleted}
+                            className={"mb-2 px-3 py-1 rounded bg-yellow-400 text-gray-900 font-semibold hover:bg-yellow-300 flex items-center gap-2 " + (topDeleted ? 'opacity-50 cursor-not-allowed' : '')}
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="#1f2937"
+                                stroke="#1f2937"
+                                className="w-5 h-5"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 11.5a8.38 8.38 0 0 1-1.9 5.4A8.5 8.5 0 0 1 3 12.5c0-4.42 3.58-8 8-8s8 3.58 8 8z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 15h8" />
+                            </svg>
+                            {comments.length === 0 ? "Ajouter un commentaire" : "Modifier mon commentaire"}
+                        </button>
+                    );
+                })()}
                 {/* Commentaires API */}
                 {commentsApi.length > 0 && (
                     <div className="mb-4">
@@ -234,36 +228,168 @@ export default function Details() {
                 <Comments
                     comments={comments}
                     title="Mes commentaires"
-                    onEdit={(idx) => { setEditIndex(idx); setModalOpen(true); }}
-                    onDelete={(_, com) => {
-                        deleteComment(com);
-                        // Rafraîchir la liste
+                    onEdit={(path, com) => {
+                        if (com && (com.content === 'Commentaire supprimé' || com.text === 'Commentaire supprimé')) return;
+                        setEditIndex(path);
+                        setModalInitialValue(com.content || com.text || "");
+                        setModalInitialAuthor(com.author || 'user1');
+                        setReplyPath(null);
+                        setModalOpen(true);
+                    }}
+                    onDelete={(path) => {
                         const all = getComments();
-                        setComments(all.filter(c => c.id === Number(id) && c.media_type === (isMovie ? "movie" : "tv")));
+                        const idxAll = all.findIndex(c => c.id === Number(id) && c.media_type === (isMovie ? "movie" : "tv"));
+                        if (path && path.length === 1) {
+                            // top-level: remplacer toujours le contenu par 'Commentaire supprimé'
+                            if (idxAll !== -1) {
+                                const target = all[idxAll];
+                                all[idxAll] = { ...target, content: 'Commentaire supprimé', text: 'Commentaire supprimé' };
+                                localStorage.setItem('cinetech_comments', JSON.stringify(all));
+                            }
+                        } else {
+                            // delete nested reply
+                            if (idxAll !== -1) {
+                                const pathAll = [idxAll, ...(path.slice(1))];
+                                function deleteByPathAll(arr, pathP) {
+                                    if (!pathP || pathP.length === 0) return arr;
+                                    if (pathP.length === 1) {
+                                        const copy = [...arr];
+                                        const node = copy[pathP[0]] || {};
+                                        copy[pathP[0]] = { ...node, content: 'Commentaire supprimé', text: 'Commentaire supprimé' };
+                                        return copy;
+                                    }
+                                    const [h, ...r] = pathP;
+                                    const copy = [...arr];
+                                    copy[h] = { ...copy[h], replies: deleteByPathAll(copy[h].replies || [], r) };
+                                    return copy;
+                                }
+                                const updated = deleteByPathAll(all, pathAll);
+                                localStorage.setItem('cinetech_comments', JSON.stringify(updated));
+                            }
+                        }
+                        const refreshed = getComments();
+                        setComments(refreshed.filter(c => c.id === Number(id) && c.media_type === (isMovie ? "movie" : "tv")));
+                    }}
+                    onReply={(path) => {
+                        setReplyPath(path);
+                        setModalInitialValue("");
+                        setModalInitialAuthor('user1');
+                        setEditIndex(null);
+                        setModalOpen(true);
                     }}
                 />
                 <CommentModal
                     open={modalOpen}
-                    onClose={() => setModalOpen(false)}
+                    onClose={() => { setModalOpen(false); setEditIndex(null); setReplyPath(null); }}
                     onSave={txt => {
-                        // Ajout ou modification via saveComment (clé globale)
-                        const item = {
-                            id: Number(id),
-                            media_type: isMovie ? "movie" : "tv",
-                            title: isMovie ? data?.title : data?.name
-                        };
-                        saveComment(item, txt);
-                        // Rafraîchir la liste
-                        const all = getComments();
-                        setComments(all.filter(c => c.id === Number(id) && c.media_type === (isMovie ? "movie" : "tv")));
+                        console.log('Details onSave:', { txt, replyPath, editIndex });
+                        if (replyPath) {
+                            // add reply to nested path
+                            const all = getComments();
+                            const idxAll = all.findIndex(c => c.id === Number(id) && c.media_type === (isMovie ? "movie" : "tv"));
+                            if (idxAll !== -1) {
+                                const pathAll = [idxAll, ...(replyPath.slice(1))];
+                                function addReplyAll(arr, pathP, reply) {
+                                    if (!pathP || pathP.length === 0) return arr;
+                                    if (pathP.length === 1) {
+                                        const copy = [...arr];
+                                        const node = copy[pathP[0]] || {};
+                                        const replies = Array.isArray(node.replies) ? [...node.replies, reply] : [reply];
+                                        copy[pathP[0]] = { ...node, replies };
+                                        return copy;
+                                    }
+                                    const [h, ...r] = pathP;
+                                    const copy = [...arr];
+                                    copy[h] = { ...copy[h], replies: addReplyAll(copy[h].replies || [], r, reply) };
+                                    return copy;
+                                }
+                                const replyObj = { content: txt, date: new Date().toLocaleString(), replies: [], author: 'user1' };
+                                console.log('Details adding reply:', replyObj);
+                                const updated = addReplyAll(all, pathAll, replyObj);
+                                localStorage.setItem('cinetech_comments', JSON.stringify(updated));
+                                const refreshed = getComments();
+                                setComments(refreshed.filter(c => c.id === Number(id) && c.media_type === (isMovie ? "movie" : "tv")));
+                            }
+                        } else if (Array.isArray(editIndex)) {
+                            // edit a nested comment or top-level when editIndex is a path array
+                            const path = editIndex;
+                            const all = getComments();
+                            const idxAll = all.findIndex(c => c.id === Number(id) && c.media_type === (isMovie ? "movie" : "tv"));
+                            if (idxAll !== -1) {
+                                const pathAll = [idxAll, ...(path.slice(1))];
+                                // Toujours préfixer par 'Commentaire modifié' lors d'une modification
+                                function prefixModified(arr, pathP) {
+                                    if (!pathP || pathP.length === 0) return arr;
+                                    if (pathP.length === 1) {
+                                        const copy = [...arr];
+                                        const node = copy[pathP[0]] || {};
+                                        const old = node.content || node.text || "";
+                                        copy[pathP[0]] = { ...node, content: `Commentaire modifié\n${old}` };
+                                        return copy;
+                                    }
+                                    const [h, ...r] = pathP;
+                                    const copy = [...arr];
+                                    copy[h] = { ...copy[h], replies: prefixModified(copy[h].replies || [], r) };
+                                    return copy;
+                                }
+                                const updated = prefixModified(all, pathAll);
+                                localStorage.setItem('cinetech_comments', JSON.stringify(updated));
+                                console.log('Details prefixed modified:', pathAll, updated[pathAll[0]]);
+                                const refreshed = getComments();
+                                setComments(refreshed.filter(c => c.id === Number(id) && c.media_type === (isMovie ? "movie" : "tv")));
+                            }
+                        } else {
+                            // Ajout top-level via saveComment (editIndex used as numeric flag like 0)
+                            const item = {
+                                id: Number(id),
+                                media_type: isMovie ? "movie" : "tv",
+                                title: isMovie ? data?.title : data?.name
+                            };
+                            saveComment(item, txt);
+                            console.log('Details saved top-level via saveComment', { item, txt });
+                            const all = getComments();
+                            setComments(all.filter(c => c.id === Number(id) && c.media_type === (isMovie ? "movie" : "tv")));
+                        }
+                        // reset modal state
+                        setModalOpen(false);
+                        setEditIndex(null);
+                        setReplyPath(null);
+                        setModalInitialValue("");
                     }}
                     onDelete={editIndex !== null ? () => {
-                        const com = comments[editIndex];
-                        deleteComment(com);
+                        // delete based on path stored in editIndex
+                        const path = editIndex;
                         const all = getComments();
-                        setComments(all.filter(c => c.id === Number(id) && c.media_type === (isMovie ? "movie" : "tv")));
+                        const idxAll = all.findIndex(c => c.id === Number(id) && c.media_type === (isMovie ? "movie" : "tv"));
+                        if (idxAll !== -1) {
+                            const pathAll = [idxAll, ...(path.slice(1))];
+                            function deleteByPathAll(arr, pathP) {
+                                if (!pathP || pathP.length === 0) return arr;
+                                if (pathP.length === 1) {
+                                    // check target for replies: if has replies, replace content
+                                    if (Array.isArray(arr[pathP[0]]?.replies) && arr[pathP[0]].replies.length > 0) {
+                                        const copy = [...arr];
+                                        const node = copy[pathP[0]] || {};
+                                        copy[pathP[0]] = { ...node, content: 'Commentaire supprimé', text: 'Commentaire supprimé' };
+                                        return copy;
+                                    }
+                                    const copy = [...arr];
+                                    copy.splice(pathP[0], 1);
+                                    return copy;
+                                }
+                                const [h, ...r] = pathP;
+                                const copy = [...arr];
+                                copy[h] = { ...copy[h], replies: deleteByPathAll(copy[h].replies || [], r) };
+                                return copy;
+                            }
+                            const updated = deleteByPathAll(all, pathAll);
+                            localStorage.setItem('cinetech_comments', JSON.stringify(updated));
+                            const refreshed = getComments();
+                            setComments(refreshed.filter(c => c.id === Number(id) && c.media_type === (isMovie ? "movie" : "tv")));
+                        }
                     } : undefined}
-                    initialValue={editIndex !== null ? (comments[editIndex]?.content || comments[editIndex]?.text || "") : ""}
+                    initialValue={modalInitialValue}
+                    initialAuthor={modalInitialAuthor}
                 />
             </div>
             <div className="mt-8">

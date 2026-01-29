@@ -10,7 +10,6 @@ export default function Home() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setLoading(true);
         Promise.all([
             fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${API_KEY}&language=fr-FR&page=1`).then(res => res.json()),
             fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${API_KEY}&language=fr-FR&page=1`).then(res => res.json())

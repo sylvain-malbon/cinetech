@@ -18,11 +18,21 @@ export function saveComment(item, content) {
     let coms = getComments();
     // Un seul commentaire par item (id+type)
     const idx = coms.findIndex(c => c.id === item.id && c.media_type === (item.media_type || (item.title ? 'movie' : 'tv')));
+    let replies = [];
+    if (idx !== -1 && Array.isArray(coms[idx].replies)) {
+        replies = coms[idx].replies;
+    } else if (item.replies && Array.isArray(item.replies)) {
+        replies = item.replies;
+    }
+    // Préserver l'auteur existant si présent, sinon utiliser item.author ou 'user1' par défaut
+    const existingAuthor = (idx !== -1 && coms[idx] && coms[idx].author) ? coms[idx].author : (item.author || 'user1');
     const newCom = {
         id: item.id,
         media_type: item.media_type || (item.title ? 'movie' : 'tv'),
         title: item.title || item.name,
-        content
+        content,
+        replies,
+        author: existingAuthor
     };
     if (idx !== -1) {
         coms[idx] = newCom;

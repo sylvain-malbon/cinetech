@@ -3,28 +3,31 @@ import { useState, useEffect } from "react";
 import CommentModal from "./CommentModal.jsx";
 import { useNavigate } from "react-router-dom";
 import slugify from "../utils/slug.js";
-import { addFavorite, removeFavorite, isFavorite as isFavoriteLS, saveComment, getComment, deleteComment } from "../utils/localStorage.js";
+import { addFavorite, removeFavorite, isFavorite as isFavoriteLS, saveComment, getComment, getComments } from "../utils/localStorage.js";
 
 export default function Card({ item, slug }) {
     const navigate = useNavigate();
-    const [isFavorite, setIsFavorite] = useState(false);
-    const [isCommented, setIsCommented] = useState(false);
+    const [isFavorite, setIsFavorite] = useState(() => isFavoriteLS(item));
     const [showModal, setShowModal] = useState(false);
-    const [comment, setComment] = useState("");
+    const [_storageTick, setStorageTick] = useState(0); // utilisé pour forcer un rerender quand le localStorage change
 
-    // Charger le commentaire existant au montage
-    useEffect(() => {
-        const c = getComment(item);
-        setComment(c);
-        setIsCommented(!!c);
-    }, [item]);
+    // Deriver le commentaire depuis le localStorage plutôt que de l'initialiser via setState dans un effet
+    const commentFromLS = getComment(item) || "";
+    const allComments = getComments();
+    const foundCom = allComments.find(c => c.id === item.id && c.media_type === (item.media_type || (item.title ? 'movie' : 'tv')));
+    const commentAuthor = foundCom ? (foundCom.author || 'user1') : 'user1';
+    const isCommented = !!commentFromLS;
 
-    // Détecte si l'item est déjà en favori au chargement et synchronise avec le localStorage
+    // Ecoute les changements de storage (autres onglets) et force un rerender local
     useEffect(() => {
-        setIsFavorite(isFavoriteLS(item));
         const syncFavorite = () => setIsFavorite(isFavoriteLS(item));
+        const bump = () => setStorageTick(t => t + 1);
         window.addEventListener('storage', syncFavorite);
-        return () => window.removeEventListener('storage', syncFavorite);
+        window.addEventListener('storage', bump);
+        return () => {
+            window.removeEventListener('storage', syncFavorite);
+            window.removeEventListener('storage', bump);
+        };
     }, [item]);
 
     const handleClick = () => {
@@ -77,11 +80,11 @@ export default function Card({ item, slug }) {
             <div className="bg-gray-900 rounded-xl shadow-lg p-3 flex flex-col items-stretch hover:shadow-2xl transition group">
                 <div className="w-full flex flex-col items-stretch cursor-pointer" onClick={handleClick}>
                     {item.poster_path ? (
-                        <div className="overflow-hidden rounded-lg mb-3 aspect-[2/3] bg-gray-700">
+                        <div className="overflow-hidden rounded-lg mb-3 bg-gray-700" style={{ aspectRatio: '2/3' }}>
                             <img src={`https://image.tmdb.org/t/p/w200${item.poster_path}`} alt={item.title || item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                         </div>
                     ) : (
-                        <div className="mb-3 w-full aspect-[2/3] bg-gray-700 flex items-center justify-center rounded-lg text-gray-400 text-sm">Image indisponible</div>
+                        <div className="mb-3 w-full bg-gray-700 flex items-center justify-center rounded-lg text-gray-400 text-sm" style={{ aspectRatio: '2/3' }}>Image indisponible</div>
                     )}
                     <div className="w-full flex flex-col items-stretch gap-1">
                         <div className="flex items-center justify-between mb-1">
@@ -147,16 +150,40 @@ export default function Card({ item, slug }) {
                 open={showModal}
                 onClose={() => setShowModal(false)}
                 onSave={val => {
-                    setComment(val);
-                    setIsCommented(true);
-                    saveComment(item, val);
+                    console.log('Card onSave:', { val, item });
+                    if (isCommented) {
+                        // Préfixer le commentaire existant par 'Commentaire modifié'
+                        const all = getComments();
+                        const idx = all.findIndex(c => c.id === item.id && c.media_type === (item.media_type || (item.title ? 'movie' : 'tv')));
+                        if (idx !== -1) {
+                            const node = all[idx];
+                            const old = node.content || node.text || "";
+                            all[idx] = { ...node, content: `Commentaire modifié\n${old}` };
+                            localStorage.setItem('cinetech_comments', JSON.stringify(all));
+                            console.log('Card saved modified comment', all[idx]);
+                            setStorageTick(t => t + 1);
+                        }
+                    } else {
+                        // Nouveau commentaire : enregistrer le texte saisi (avec auteur par défaut géré par saveComment)
+                        saveComment(item, val);
+                        console.log('Card saved new comment via saveComment', { item, val });
+                        setStorageTick(t => t + 1);
+                    }
+                    setShowModal(false);
                 }}
                 onDelete={isCommented ? () => {
-                    setComment("");
-                    setIsCommented(false);
-                    deleteComment(item);
+                    // Préserver les replies : si le commentaire a des réponses, remplacer son contenu
+                    const all = getComments();
+                    const idx = all.findIndex(c => c.id === item.id && c.media_type === (item.media_type || (item.title ? 'movie' : 'tv')));
+                    if (idx !== -1) {
+                        const target = all[idx];
+                        all[idx] = { ...target, content: 'Commentaire supprimé', text: 'Commentaire supprimé' };
+                        localStorage.setItem('cinetech_comments', JSON.stringify(all));
+                        setStorageTick(t => t + 1);
+                    }
                 } : undefined}
-                initialValue={comment}
+                initialValue={commentFromLS}
+                initialAuthor={commentAuthor}
             />
         </>
     );

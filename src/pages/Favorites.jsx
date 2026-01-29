@@ -7,14 +7,11 @@ import Pagination from "../components/Pagination.jsx";
 
 
 export default function Favorites() {
-    const [favorites, setFavorites] = useState([]);
+    const [favorites, setFavorites] = useState(() => getFavorites() || []);
     const [page, setPage] = useState(1);
     const FAVORITES_PER_PAGE = 20;
 
     useEffect(() => {
-        const favs = getFavorites();
-        console.log("[DEBUG] Favoris récupérés:", favs);
-        setFavorites(favs);
         const syncFavorites = () => {
             const favs = getFavorites();
             console.log("[DEBUG] Favoris MAJ (storage):", favs);

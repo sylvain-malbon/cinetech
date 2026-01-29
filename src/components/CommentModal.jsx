@@ -1,17 +1,23 @@
 import { useState, useEffect } from "react";
 
-export default function CommentModal({ open, onClose, onSave, onDelete, initialValue = "" }) {
+
+export default function CommentModal({ open, onClose, onSave, onDelete, initialValue = "", initialAuthor = 'user1' }) {
     const [comment, setComment] = useState(initialValue);
 
-    // Met à jour le champ si initialValue change (édition)
-    useEffect(() => { setComment(initialValue); }, [initialValue]);
+    // Réinitialise le champ à chaque ouverture de la modale
+    useEffect(() => {
+        if (open) {
+            Promise.resolve().then(() => setComment(initialValue));
+        }
+    }, [open, initialValue]);
 
     if (!open) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
             <div className="bg-gray-900 p-6 rounded shadow-lg w-full max-w-md">
-                <h3 className="text-lg font-bold text-white mb-4">{initialValue ? "Modifier le commentaire" : "Ajouter un commentaire"}</h3>
+                <h3 className="text-lg font-bold text-white mb-2">{initialValue ? "Modifier le commentaire" : "Ajouter un commentaire"}</h3>
+                <div className="text-sm text-gray-300 mb-3">{(initialAuthor || 'user1').charAt(0).toUpperCase() + (initialAuthor || 'user1').slice(1)} a dit :</div>
                 <textarea
                     className="w-full p-2 rounded bg-gray-800 text-white mb-4 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                     rows={4}
@@ -33,7 +39,7 @@ export default function CommentModal({ open, onClose, onSave, onDelete, initialV
                         >Annuler</button>
                         <button
                             className="px-4 py-1 rounded bg-yellow-400 text-gray-900 font-semibold hover:bg-yellow-300"
-                            onClick={() => { onSave(comment); onClose(); }}
+                            onClick={() => { console.log('CommentModal onSave:', { comment, initialAuthor }); onSave(comment); onClose(); }}
                             disabled={comment.trim().length === 0}
                         >Enregistrer</button>
                     </div>

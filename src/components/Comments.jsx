@@ -1,8 +1,52 @@
+
 import React from "react";
 
-// comments : tableau d'objets {id, media_type, title, content, date?}
-// onEdit, onDelete : callbacks optionnels (index ou id)
-export default function Comments({ comments, title = "Commentaires", onEdit, onDelete }) {
+// Affichage récursif d'un commentaire et de ses replies
+function CommentItem({ com, path, onEdit, onDelete, onReply }) {
+    // path = tableau d'index pour localiser le commentaire dans l'arbre
+    const isRoot = path.length === 1;
+    const isDeleted = (com.content === 'Commentaire supprimé' || com.text === 'Commentaire supprimé');
+    return (
+        <div className={"bg-gray-800 p-3 rounded mb-2 " + (path.length > 0 ? "ml-4 border-l-2 border-blue-400 pl-4" : "")}>
+            <div>
+                {isRoot && (
+                    <div className="text-xs text-gray-400 mb-1">
+                        {(com.media_type === "movie" ? "Film" : com.media_type === "tv" ? "Série" : "")} {com.id ? `#${com.id}` : ''} {com.title ? `- ${com.title}` : ''}
+                        {com.date && <span className="text-gray-500 ml-2">({com.date})</span>}
+                        <div className="text-sm text-gray-200 mt-1">{(com.author || 'user1').charAt(0).toUpperCase() + (com.author || 'user1').slice(1)} a dit :</div>
+                    </div>
+                )}
+                {!isRoot && com.date && (
+                    <div className="text-xs text-gray-500 mb-1">{(com.author || 'user1').charAt(0).toUpperCase() + (com.author || 'user1').slice(1)} {com.date && <span className="text-gray-500 ml-2">({com.date})</span>}</div>
+                )}
+                <div className={isDeleted ? "text-gray-400 italic text-sm mb-2 whitespace-pre-line" : "text-white text-sm mb-2 whitespace-pre-line"}>{com.content || com.text}</div>
+                <div className="flex gap-2 flex-wrap mb-1">
+                    {onReply && <button onClick={() => onReply(path, com)} className="text-xs px-2 py-1 rounded bg-blue-500 text-white hover:bg-blue-400">Répondre</button>}
+                    {onEdit && ((com.content !== 'Commentaire supprimé' && com.text !== 'Commentaire supprimé') ? <button onClick={() => onEdit(path, com)} className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300 hover:bg-gray-600">Modifier</button> : null)}
+                    {onDelete && <button onClick={() => onDelete(path, com)} className="text-xs px-2 py-1 rounded bg-red-500 text-white hover:bg-red-400">Supprimer</button>}
+                </div>
+            </div>
+            {/* Affichage récursif des réponses */}
+            {Array.isArray(com.replies) && com.replies.length > 0 && (
+                <div className="mt-3 space-y-2">
+                    {com.replies.map((rep, rIdx) => (
+                        <CommentItem
+                            key={rIdx}
+                            com={rep}
+                            path={[...path, rIdx]}
+                            onEdit={onEdit}
+                            onDelete={onDelete}
+                            onReply={onReply}
+                        />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// Composant principal
+export default function Comments({ comments, title = "Commentaires", onEdit, onDelete, onReply }) {
     return (
         <div className="space-y-4">
             <h3 className="text-xl font-bold mb-4 text-white">{title}</h3>
@@ -10,21 +54,15 @@ export default function Comments({ comments, title = "Commentaires", onEdit, onD
                 <div className="text-gray-400">Aucun commentaire pour le moment.</div>
             ) : (
                 comments.map((com, idx) => (
-                    <div key={com.id + (com.media_type || "") + idx} className="bg-gray-800 p-3 rounded flex justify-between items-center">
-                        <div>
-                            <div className="text-xs text-gray-400">
-                                {(com.media_type === "movie" ? "Film" : com.media_type === "tv" ? "Série" : "")} #{com.id} - {com.title}
-                                {com.date && <span className="text-gray-500 ml-2">({com.date})</span>}
-                            </div>
-                            <div className="text-white text-sm">{com.content || com.text}</div>
-                        </div>
-                        {(onEdit || onDelete) && (
-                            <div className="flex gap-2">
-                                {onEdit && <button onClick={() => onEdit(idx, com)} className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300 hover:bg-gray-600">Modifier</button>}
-                                {onDelete && <button onClick={() => onDelete(idx, com)} className="text-xs px-2 py-1 rounded bg-red-500 text-white hover:bg-red-400">Supprimer</button>}
-                            </div>
-                        )}
-                    </div>
+                    <CommentItem
+                        key={com.id + (com.media_type || "") + idx}
+                        com={com}
+                        idx={idx}
+                        path={[idx]}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                        onReply={onReply}
+                    />
                 ))
             )}
         </div>

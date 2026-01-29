@@ -27,7 +27,7 @@ export default function Header() {
           <SearchBar />
         </div>
         {/* Bouton Login à droite */}
-        <div className="flex items-center justify-end flex-shrink-0 md:ml-4">
+        <div className="flex items-center justify-end shrink-0 md:ml-4">
           <button className="bg-yellow-400 text-gray-900 font-semibold px-4 py-1 rounded hover:bg-yellow-300 transition">Login</button>
         </div>
       </div>
