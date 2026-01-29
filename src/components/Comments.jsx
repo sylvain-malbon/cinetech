@@ -6,6 +6,13 @@ function CommentItem({ com, path, onEdit, onDelete, onReply }) {
     // path = tableau d'index pour localiser le commentaire dans l'arbre
     const isRoot = path.length === 1;
     const isDeleted = (com.content === 'Commentaire supprimé' || com.text === 'Commentaire supprimé');
+    // Style uniforme pour l'auteur avec avatar
+    const authorDisplay = (
+        <span className="flex items-center gap-2">
+            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-yellow-400 text-gray-900 font-bold text-sm">U</span>
+            <span className="text-yellow-400 font-semibold">@User1</span>
+        </span>
+    );
     return (
         <div className={"bg-gray-800 p-3 rounded mb-2 " + (path.length > 0 ? "ml-4 border-l-2 border-blue-400 pl-4" : "")}>
             <div>
@@ -13,11 +20,11 @@ function CommentItem({ com, path, onEdit, onDelete, onReply }) {
                     <div className="text-xs text-gray-400 mb-1">
                         {(com.media_type === "movie" ? "Film" : com.media_type === "tv" ? "Série" : "")} {com.id ? `#${com.id}` : ''} {com.title ? `- ${com.title}` : ''}
                         {com.date && <span className="text-gray-500 ml-2">({com.date})</span>}
-                        <div className="text-sm text-gray-200 mt-1">{(com.author || 'user1').charAt(0).toUpperCase() + (com.author || 'user1').slice(1)} a dit :</div>
+                        <div className="text-sm mt-1">{authorDisplay}</div>
                     </div>
                 )}
                 {!isRoot && com.date && (
-                    <div className="text-xs text-gray-500 mb-1">{(com.author || 'user1').charAt(0).toUpperCase() + (com.author || 'user1').slice(1)} {com.date && <span className="text-gray-500 ml-2">({com.date})</span>}</div>
+                    <div className="text-xs text-gray-500 mb-1">{authorDisplay}{com.date && <span className="text-gray-500 ml-2">({com.date})</span>}</div>
                 )}
                 <div className={isDeleted ? "text-gray-400 italic text-sm mb-2 whitespace-pre-line" : "text-white text-sm mb-2 whitespace-pre-line"}>{com.content || com.text}</div>
                 <div className="flex gap-2 flex-wrap mb-1">

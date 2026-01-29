@@ -17,7 +17,12 @@ export default function CommentModal({ open, onClose, onSave, onDelete, initialV
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
             <div className="bg-gray-900 p-6 rounded shadow-lg w-full max-w-md">
                 <h3 className="text-lg font-bold text-white mb-2">{initialValue ? "Modifier le commentaire" : "Ajouter un commentaire"}</h3>
-                <div className="text-sm text-gray-300 mb-3">{(initialAuthor || 'user1').charAt(0).toUpperCase() + (initialAuthor || 'user1').slice(1)} a dit :</div>
+                <div className="text-sm mb-3">
+                    <span className="flex items-center gap-2">
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-yellow-400 text-gray-900 font-bold text-sm">U</span>
+                        <span className="text-yellow-400 font-semibold">@User1</span>
+                    </span>
+                </div>
                 <textarea
                     className="w-full p-2 rounded bg-gray-800 text-white mb-4 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                     rows={4}

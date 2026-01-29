@@ -16,7 +16,9 @@ export default function Card({ item, slug }) {
     const allComments = getComments();
     const foundCom = allComments.find(c => c.id === item.id && c.media_type === (item.media_type || (item.title ? 'movie' : 'tv')));
     const commentAuthor = foundCom ? (foundCom.author || 'user1') : 'user1';
-    const isCommented = !!commentFromLS;
+    // Un commentaire est considéré comme commenté seulement s'il existe et n'est pas supprimé
+    const isDeletedComment = (commentFromLS === 'Commentaire supprimé');
+    const isCommented = !!commentFromLS && !isDeletedComment;
 
     // Ecoute les changements de storage (autres onglets) et force un rerender local
     useEffect(() => {
@@ -116,31 +118,52 @@ export default function Card({ item, slug }) {
                                 </svg>
                                 {isFavorite ? "Retirer" : "Favori"}
                             </button>
-                            <button
-                                aria-label={isCommented ? "Modifier le commentaire" : "Ajouter un commentaire"}
-                                onClick={e => {
-                                    e.stopPropagation();
-                                    setShowModal(true);
-                                }}
-                                className={
-                                    `focus:outline-none flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition border ` +
-                                    (isCommented
-                                        ? 'bg-yellow-400/10 border-yellow-400 text-yellow-300 hover:bg-yellow-400/20'
-                                        : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600')
-                                }
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 24 24"
-                                    fill={isCommented ? "#facc15" : "#9ca3af"}
-                                    stroke={isCommented ? "#facc15" : "#9ca3af"}
-                                    className="w-5 h-5 transition"
+                            {/* Affichage du bouton commentaire :
+                                 - "Commenter" si pas de commentaire ou si supprimé
+                                 - "Commenté" si un commentaire existe et n'est pas supprimé */}
+                            {(!isCommented || isDeletedComment) ? (
+                                <button
+                                    aria-label="Ajouter un commentaire"
+                                    onClick={e => {
+                                        e.stopPropagation();
+                                        setShowModal(true);
+                                    }}
+                                    className="focus:outline-none flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition border bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
                                 >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 11.5a8.38 8.38 0 0 1-1.9 5.4A8.5 8.5 0 0 1 3 12.5c0-4.42 3.58-8 8-8s8 3.58 8 8z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 15h8" />
-                                </svg>
-                                {isCommented ? "Commenté" : "Commenter"}
-                            </button>
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 24 24"
+                                        fill="#9ca3af"
+                                        stroke="#9ca3af"
+                                        className="w-5 h-5 transition"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 11.5a8.38 8.38 0 0 1-1.9 5.4A8.5 8.5 0 0 1 3 12.5c0-4.42 3.58-8 8-8s8 3.58 8 8z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 15h8" />
+                                    </svg>
+                                    Commenter
+                                </button>
+                            ) : (
+                                <button
+                                    aria-label="Voir les commentaires"
+                                    onClick={e => {
+                                        e.stopPropagation();
+                                        navigate(`/comments`); // ou `/details/${item.id}` selon la logique souhaitée
+                                    }}
+                                    className="focus:outline-none flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition border bg-yellow-400/10 border-yellow-400 text-yellow-300 hover:bg-yellow-400/20"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 24 24"
+                                        fill="#facc15"
+                                        stroke="#facc15"
+                                        className="w-5 h-5 transition"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 11.5a8.38 8.38 0 0 1-1.9 5.4A8.5 8.5 0 0 1 3 12.5c0-4.42 3.58-8 8-8s8 3.58 8 8z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 15h8" />
+                                    </svg>
+                                    Commentaires
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -150,8 +173,11 @@ export default function Card({ item, slug }) {
                 open={showModal}
                 onClose={() => setShowModal(false)}
                 onSave={val => {
-                    console.log('Card onSave:', { val, item });
-                    if (isCommented) {
+                    // Si le commentaire est supprimé, on repart sur un nouveau commentaire
+                    if (isDeletedComment) {
+                        saveComment(item, val);
+                        setStorageTick(t => t + 1);
+                    } else if (isCommented) {
                         // Préfixer le commentaire existant par 'Commentaire modifié'
                         const all = getComments();
                         const idx = all.findIndex(c => c.id === item.id && c.media_type === (item.media_type || (item.title ? 'movie' : 'tv')));
@@ -160,13 +186,11 @@ export default function Card({ item, slug }) {
                             const old = node.content || node.text || "";
                             all[idx] = { ...node, content: `Commentaire modifié\n${old}` };
                             localStorage.setItem('cinetech_comments', JSON.stringify(all));
-                            console.log('Card saved modified comment', all[idx]);
                             setStorageTick(t => t + 1);
                         }
                     } else {
                         // Nouveau commentaire : enregistrer le texte saisi (avec auteur par défaut géré par saveComment)
                         saveComment(item, val);
-                        console.log('Card saved new comment via saveComment', { item, val });
                         setStorageTick(t => t + 1);
                     }
                     setShowModal(false);
@@ -182,7 +206,7 @@ export default function Card({ item, slug }) {
                         setStorageTick(t => t + 1);
                     }
                 } : undefined}
-                initialValue={commentFromLS}
+                initialValue={isDeletedComment ? "" : commentFromLS}
                 initialAuthor={commentAuthor}
             />
         </>
