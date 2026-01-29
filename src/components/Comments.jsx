@@ -14,13 +14,24 @@ function CommentItem({ com, path, onEdit, onDelete, onReply }) {
         </span>
     );
     return (
-        <div className={"bg-gray-800 p-3 rounded mb-2 " + (path.length > 0 ? "ml-4 border-l-2 border-blue-400 pl-4" : "")}>
+        <div className={"bg-gray-800 p-3 rounded mb-2 " + (path.length > 0 ? "ml-4 border-l-2 border-gray-600 pl-4" : "")}>
             <div>
                 {isRoot && (
-                    <div className="text-xs text-gray-400 mb-1">
-                        {(com.media_type === "movie" ? "Film" : com.media_type === "tv" ? "Série" : "")} {com.id ? `#${com.id}` : ''} {com.title ? `- ${com.title}` : ''}
-                        {com.date && <span className="text-gray-500 ml-2">({com.date})</span>}
-                        <div className="text-sm mt-1">{authorDisplay}</div>
+                    <div className="text-xs text-gray-400 mb-1 flex items-center gap-2">
+                        {/* Miniature du film/série si poster_path présent */}
+                        {com.poster_path && (
+                            <img
+                                src={`https://image.tmdb.org/t/p/w45${com.poster_path}`}
+                                alt={com.title || com.name || "miniature"}
+                                className="w-8 h-12 object-cover rounded mr-2 border border-gray-700 bg-gray-700"
+                                style={{ minWidth: 32, minHeight: 48 }}
+                            />
+                        )}
+                        <span>
+                            {(com.media_type === "movie" ? "Film" : com.media_type === "tv" ? "Série" : "")} {com.id ? `#${com.id}` : ''} {com.title ? `- ${com.title}` : ''}
+                            {com.date && <span className="text-gray-500 ml-2">({com.date})</span>}
+                            <div className="text-sm mt-1">{authorDisplay}</div>
+                        </span>
                     </div>
                 )}
                 {!isRoot && com.date && (
@@ -28,7 +39,14 @@ function CommentItem({ com, path, onEdit, onDelete, onReply }) {
                 )}
                 <div className={isDeleted ? "text-gray-400 italic text-sm mb-2 whitespace-pre-line" : "text-white text-sm mb-2 whitespace-pre-line"}>{com.content || com.text}</div>
                 <div className="flex gap-2 flex-wrap mb-1">
-                    {onReply && <button onClick={() => onReply(path, com)} className="text-xs px-2 py-1 rounded bg-blue-500 text-white hover:bg-blue-400">Répondre</button>}
+                    {onReply && (
+                        <button
+                            onClick={() => onReply(path, com)}
+                            className="text-xs px-2 py-1 rounded bg-gray-700 border border-gray-600 text-gray-300 hover:bg-gray-600 focus:outline-none"
+                        >
+                            Répondre
+                        </button>
+                    )}
                     {onEdit && ((com.content !== 'Commentaire supprimé' && com.text !== 'Commentaire supprimé') ? <button onClick={() => onEdit(path, com)} className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300 hover:bg-gray-600">Modifier</button> : null)}
                     {onDelete && <button onClick={() => onDelete(path, com)} className="text-xs px-2 py-1 rounded bg-red-500 text-white hover:bg-red-400">Supprimer</button>}
                 </div>

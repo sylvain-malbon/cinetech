@@ -26,10 +26,13 @@ export function saveComment(item, content) {
     }
     // Préserver l'auteur existant si présent, sinon utiliser item.author ou 'user1' par défaut
     const existingAuthor = (idx !== -1 && coms[idx] && coms[idx].author) ? coms[idx].author : (item.author || 'user1');
+    // Inclure poster_path et autres infos utiles pour l'affichage dans Comments
     const newCom = {
         id: item.id,
         media_type: item.media_type || (item.title ? 'movie' : 'tv'),
         title: item.title || item.name,
+        name: item.name,
+        poster_path: item.poster_path || (idx !== -1 && coms[idx] && coms[idx].poster_path),
         content,
         replies,
         author: existingAuthor
