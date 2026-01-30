@@ -63,7 +63,18 @@ const FAVORITES_KEY = 'cinetech_favorites';
 // Récupère la liste des favoris depuis le localStorage
 export function getFavorites() {
     const favs = localStorage.getItem(FAVORITES_KEY);
-    return favs ? JSON.parse(favs) : [];
+    if (!favs) return [];
+    try {
+        const parsed = JSON.parse(favs);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+        // Si la valeur est corrompue, on la répare en la supprimant et on renvoie un tableau vide
+        console.warn('getFavorites: invalid JSON in localStorage, clearing corrupted value', e);
+        try { localStorage.removeItem(FAVORITES_KEY); } catch (er) { /* ignore */ }
+        // Notifier l'application qu'une réparation a eu lieu (pour afficher un message à l'utilisateur)
+        try { window.dispatchEvent(new CustomEvent('cinetech:localStorageRepaired', { detail: { key: FAVORITES_KEY } })); } catch (er) { /* ignore */ }
+        return [];
+    }
 }
 
 // Ajoute un favori (film ou série)
@@ -73,6 +84,8 @@ export function addFavorite(item) {
     if (!favs.some(f => f.id === item.id && f.media_type === item.media_type)) {
         favs.push(item);
         localStorage.setItem(FAVORITES_KEY, JSON.stringify(favs));
+        // Notify listeners in the same tab (some browsers don't fire storage on same-tab updates)
+        try { window.dispatchEvent(new Event('storage')); } catch (e) { /* ignore */ }
     }
 }
 
@@ -81,6 +94,8 @@ export function removeFavorite(item) {
     let favs = getFavorites();
     favs = favs.filter(f => !(f.id === item.id && f.media_type === item.media_type));
     localStorage.setItem(FAVORITES_KEY, JSON.stringify(favs));
+    // Notify listeners in the same tab (some browsers don't fire storage on same-tab updates)
+    try { window.dispatchEvent(new Event('storage')); } catch (e) { /* ignore */ }
 }
 
 // Vérifie si un item est déjà en favori
