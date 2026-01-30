@@ -15,6 +15,11 @@ export default function useLocalStorage(key, initialValue) {
 
     const [storedValue, setStoredValue] = useState(readValue);
 
+    // Toujours relire la valeur à chaque render (pour éviter les désyncs après login/logout)
+    useEffect(() => {
+        setStoredValue(readValue());
+    });
+
     useEffect(() => {
         setStoredValue(readValue());
         // listen storage events from other tabs

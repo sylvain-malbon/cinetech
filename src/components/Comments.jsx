@@ -79,6 +79,7 @@ function CommentItem({ com, path, onEdit, onDelete, onReply, storedUser }) {
                             onEdit={onEdit}
                             onDelete={onDelete}
                             onReply={onReply}
+                            storedUser={storedUser}
                         />
                     ))}
                 </div>
