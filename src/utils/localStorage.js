@@ -24,8 +24,9 @@ export function saveComment(item, content) {
     } else if (item.replies && Array.isArray(item.replies)) {
         replies = item.replies;
     }
-    // Préserver l'auteur existant si présent, sinon utiliser item.author ou 'user1' par défaut
-    const existingAuthor = (idx !== -1 && coms[idx] && coms[idx].author) ? coms[idx].author : (item.author || 'user1');
+    // Préserver l'auteur existant si présent, sinon utiliser item.author ou 'anonyme' par défaut
+    const existingAuthor = (idx !== -1 && coms[idx] && coms[idx].author) ? coms[idx].author : (item.author || 'anonyme');
+    console.log('saveComment: item.author=', item.author, 'existingAuthor=', existingAuthor, 'item=', item);
     // Inclure poster_path et autres infos utiles pour l'affichage dans Comments
     const newCom = {
         id: item.id,

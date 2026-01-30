@@ -2,6 +2,7 @@
 import { useParams, useLocation } from "react-router-dom";
 import useFetch from "../hooks/useFetch";
 import { useEffect, useState } from "react";
+import useLocalStorage from "../hooks/useLocalStorage.js";
 import CommentModal from "../components/CommentModal";
 import Comments from "../components/Comments.jsx";
 import { getComments, saveComment, addFavorite, removeFavorite, isFavorite } from "../utils/localStorage.js";
@@ -77,7 +78,8 @@ export default function Details() {
     const [comments, setComments] = useState([]);
     const [modalOpen, setModalOpen] = useState(false);
     const [editIndex, setEditIndex] = useState(null);
-    const [modalInitialAuthor, setModalInitialAuthor] = useState('user1');
+    const [storedUser] = useLocalStorage('cinetech_user', '');
+    const [modalInitialAuthor, setModalInitialAuthor] = useState(storedUser || 'anonyme');
     const [replyPath, setReplyPath] = useState(null);
     const [modalInitialValue, setModalInitialValue] = useState("");
 
@@ -232,7 +234,7 @@ export default function Details() {
                         if (com && (com.content === 'Commentaire supprimé' || com.text === 'Commentaire supprimé')) return;
                         setEditIndex(path);
                         setModalInitialValue(com.content || com.text || "");
-                        setModalInitialAuthor(com.author || 'user1');
+                        setModalInitialAuthor(com.author || storedUser || 'anonyme');
                         setReplyPath(null);
                         setModalOpen(true);
                     }}
@@ -273,7 +275,7 @@ export default function Details() {
                     onReply={(path) => {
                         setReplyPath(path);
                         setModalInitialValue("");
-                        setModalInitialAuthor('user1');
+                        setModalInitialAuthor(storedUser || 'anonyme');
                         setEditIndex(null);
                         setModalOpen(true);
                     }}
@@ -303,7 +305,7 @@ export default function Details() {
                                     copy[h] = { ...copy[h], replies: addReplyAll(copy[h].replies || [], r, reply) };
                                     return copy;
                                 }
-                                const replyObj = { content: txt, date: new Date().toLocaleString(), replies: [], author: 'user1' };
+                                const replyObj = { content: txt, date: new Date().toLocaleString(), replies: [], author: (storedUser || 'anonyme') };
                                 console.log('Details adding reply:', replyObj);
                                 const updated = addReplyAll(all, pathAll, replyObj);
                                 localStorage.setItem('cinetech_comments', JSON.stringify(updated));
@@ -343,7 +345,8 @@ export default function Details() {
                             const item = {
                                 id: Number(id),
                                 media_type: isMovie ? "movie" : "tv",
-                                title: isMovie ? data?.title : data?.name
+                                title: isMovie ? data?.title : data?.name,
+                                author: (storedUser || 'anonyme')
                             };
                             saveComment(item, txt);
                             console.log('Details saved top-level via saveComment', { item, txt });

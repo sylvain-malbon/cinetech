@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import useLocalStorage from "../hooks/useLocalStorage.js";
 import CommentModal from "./CommentModal.jsx";
 import { useNavigate } from "react-router-dom";
 import slugify from "../utils/slug.js";
@@ -10,12 +11,13 @@ export default function Card({ item, slug }) {
     const [isFavorite, setIsFavorite] = useState(() => isFavoriteLS(item));
     const [showModal, setShowModal] = useState(false);
     const [_storageTick, setStorageTick] = useState(0); // utilisé pour forcer un rerender quand le localStorage change
+    const [storedUser] = useLocalStorage('cinetech_user', '');
 
     // Deriver le commentaire depuis le localStorage plutôt que de l'initialiser via setState dans un effet
     const commentFromLS = getComment(item) || "";
     const allComments = getComments();
     const foundCom = allComments.find(c => c.id === item.id && c.media_type === (item.media_type || (item.title ? 'movie' : 'tv')));
-    const commentAuthor = foundCom ? (foundCom.author || 'user1') : 'user1';
+    const commentAuthor = foundCom ? (foundCom.author || 'anonyme') : 'anonyme';
     // Un commentaire est considéré comme commenté seulement s'il existe et n'est pas supprimé
     const isDeletedComment = (commentFromLS === 'Commentaire supprimé');
     const isCommented = !!commentFromLS && !isDeletedComment;
@@ -173,9 +175,12 @@ export default function Card({ item, slug }) {
                 open={showModal}
                 onClose={() => setShowModal(false)}
                 onSave={val => {
+                    let sUser = storedUser;
+                    if (sUser) sUser = sUser.replace(/^@+/, '').trim();
+                    console.log('Card onSave: storedUser=', sUser, { item, val });
                     // Si le commentaire est supprimé, on repart sur un nouveau commentaire
                     if (isDeletedComment) {
-                        saveComment(item, val);
+                        saveComment({ ...item, author: (sUser || 'anonyme') }, val);
                         setStorageTick(t => t + 1);
                     } else if (isCommented) {
                         // Préfixer le commentaire existant par 'Commentaire modifié'
@@ -189,8 +194,8 @@ export default function Card({ item, slug }) {
                             setStorageTick(t => t + 1);
                         }
                     } else {
-                        // Nouveau commentaire : enregistrer le texte saisi (avec auteur par défaut géré par saveComment)
-                        saveComment(item, val);
+                        // Nouveau commentaire : enregistrer le texte saisi (inclure l'auteur connecté)
+                        saveComment({ ...item, author: (sUser || 'anonyme') }, val);
                         setStorageTick(t => t + 1);
                     }
                     setShowModal(false);

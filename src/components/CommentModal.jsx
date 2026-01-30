@@ -1,8 +1,18 @@
 import { useState, useEffect } from "react";
+import useLocalStorage from "../hooks/useLocalStorage.js";
 
+function formatDisplayAuthor(raw) {
+    if (!raw) return 'anonyme';
+    const v = raw.startsWith('@') ? raw.slice(1) : raw;
+    return v.charAt(0).toUpperCase() + v.slice(1);
+}
 
-export default function CommentModal({ open, onClose, onSave, onDelete, initialValue = "", initialAuthor = 'user1' }) {
+export default function CommentModal({ open, onClose, onSave, onDelete, initialValue = "", initialAuthor }) {
     const [comment, setComment] = useState(initialValue);
+
+    // utilise en priorité le pseudo stocké (utilisateur connecté), sinon la prop initialAuthor
+    const [stored] = useLocalStorage('cinetech_user', '');
+    const author = (stored && stored.replace(/^@+/, '').trim()) || initialAuthor || 'anonyme';
 
     // Réinitialise le champ à chaque ouverture de la modale
     useEffect(() => {
@@ -19,8 +29,12 @@ export default function CommentModal({ open, onClose, onSave, onDelete, initialV
                 <h3 className="text-lg font-bold text-white mb-2">{initialValue ? "Modifier le commentaire" : "Ajouter un commentaire"}</h3>
                 <div className="text-sm mb-3">
                     <span className="flex items-center gap-2">
-                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-yellow-400 text-gray-900 font-bold text-sm">U</span>
-                        <span className="text-yellow-400 font-semibold">@User1</span>
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-yellow-400 text-gray-900 font-bold text-sm">
+                            {(author && author.trim() && author !== 'anonyme')
+                                ? author.replace(/^@+/, '').charAt(0).toUpperCase()
+                                : 'A'}
+                        </span>
+                        <span className="text-yellow-400 font-semibold">@{(author && author.trim() && author !== 'anonyme') ? formatDisplayAuthor(author) : 'Anonym'}</span>
                     </span>
                 </div>
                 <textarea
@@ -44,7 +58,7 @@ export default function CommentModal({ open, onClose, onSave, onDelete, initialV
                         >Annuler</button>
                         <button
                             className="px-4 py-1 rounded bg-yellow-400 text-gray-900 font-semibold hover:bg-yellow-300"
-                            onClick={() => { console.log('CommentModal onSave:', { comment, initialAuthor }); onSave(comment); onClose(); }}
+                            onClick={() => { console.log('CommentModal onSave:', { comment, author }); onSave(comment); onClose(); }}
                             disabled={comment.trim().length === 0}
                         >Enregistrer</button>
                     </div>

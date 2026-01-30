@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { getComments } from "../utils/localStorage.js";
 import Comments from "../components/Comments.jsx";
 import CommentModal from "../components/CommentModal";
+import useLocalStorage from "../hooks/useLocalStorage.js";
 
 export default function CommentsPage() {
     const [comments, setComments] = useState(() => getComments() || []);
@@ -10,6 +11,7 @@ export default function CommentsPage() {
     const [editPath, setEditPath] = useState(null); // chemin dans l'arbre pour édition
     const [replyPath, setReplyPath] = useState(null); // chemin dans l'arbre pour réponse
     const [modalInitialValue, setModalInitialValue] = useState("");
+    const [storedUser] = useLocalStorage('cinetech_user', '');
 
     // Sync when storage changes (other tabs)
     useEffect(() => {
@@ -76,7 +78,7 @@ export default function CommentsPage() {
             // Ajout réponse
             newComments = updateByPath(comments, replyPath, c => ({
                 ...c,
-                replies: [...(c.replies || []), { content: txt, date: new Date().toLocaleString(), replies: [] }]
+                replies: [...(c.replies || []), { content: txt, date: new Date().toLocaleString(), replies: [], author: (storedUser || 'anonyme') }]
             }));
         }
         setComments(newComments);
@@ -102,6 +104,7 @@ export default function CommentsPage() {
                 onSave={handleSave}
                 onDelete={editPath ? () => handleDelete(editPath) : undefined}
                 initialValue={modalInitialValue}
+                initialAuthor={storedUser || 'anonyme'}
             />
         </div>
     );
